@@ -1,0 +1,9 @@
+[
+  {
+    "objectID": "kim.html",
+    "href": "kim.html",
+    "title": "기말고사1-(1),(2)",
+    "section": "",
+    "text": "title: “NYCTaxi” author: “김동민” format: dashboard execute: enabled: true cache: false freeze: false\n\n\n# 여기에 온갖코드를 넣음.\n# 1-(1),(2),(3) 에 대응하는 plotly figure를 아래와 같은 이름으로 저장\n# fig1 = ...\n# fig2 = ...\n# fig3 = ...\n\n\n기말고사1-(3)"
+  }
+]
