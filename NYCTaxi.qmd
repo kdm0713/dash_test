@@ -120,9 +120,7 @@ fig = px.line_mapbox(
     center = {'lat':40.7322, 'lon':-73.9052},
     #---#
     mapbox_style = 'carto-positron',
-    zoom=10,
-    width = 750,
-    height = 600    
+    zoom=11,
 )
 scatter_data = px.scatter_mapbox(
     data_frame=tidydata,
@@ -133,9 +131,7 @@ scatter_data = px.scatter_mapbox(
     color = 'speed_cut',
     #---#
     mapbox_style = 'carto-positron',
-    zoom=10,
-    width = 750,
-    height = 600    
+    zoom=11,  
 ).data 
 for sd in scatter_data: 
     fig.add_trace(sd)
