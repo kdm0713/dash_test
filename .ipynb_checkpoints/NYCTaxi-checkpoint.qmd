@@ -143,3 +143,85 @@ fig.update_traces(
 )
 fig.show(config={'scrollZoom':False})
 ```
+# 기말고사2-(1)
+
+```{python}
+url = 'https://raw.githubusercontent.com/guebin/DV2022/main/posts/Energy/{}.csv'
+prov = ['Seoul', 'Busan', 'Daegu', 'Incheon', 
+        'Gwangju', 'Daejeon', 'Ulsan', 'Sejongsi', 
+        'Gyeonggi-do', 'Gangwon-do', 'Chungcheongbuk-do', 
+        'Chungcheongnam-do', 'Jeollabuk-do', 'Jeollanam-do', 
+        'Gyeongsangbuk-do', 'Gyeongsangnam-do', 'Jeju-do']
+df = pd.concat([pd.read_csv(url.format(p+y)).assign(년도=y, 시도=p) for p in prov for y in ['2018', '2019', '2020', '2021']]).reset_index(drop=True)\
+.assign(년도 = lambda df: df.년도.astype(int))\
+.set_index(['년도','시도','지역']).applymap(lambda x: int(str(x).replace(',','')))\
+.reset_index()
+
+global_dict = json.loads(requests.get('https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2018/json/skorea-provinces-2018-geo.json').text)
+local_dict = json.loads(requests.get('https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2018/json/skorea-municipalities-2018-geo.json').text)
+#--#
+url = 'https://raw.githubusercontent.com/guebin/DV2022/main/posts/Energy/{}.csv'
+prov = ['Seoul', 'Busan', 'Daegu', 'Incheon', 
+        'Gwangju', 'Daejeon', 'Ulsan', 'Sejongsi', 
+        'Gyeonggi-do', 'Gangwon-do', 'Chungcheongbuk-do', 
+        'Chungcheongnam-do', 'Jeollabuk-do', 'Jeollanam-do', 
+        'Gyeongsangbuk-do', 'Gyeongsangnam-do', 'Jeju-do']
+df = pd.concat([pd.read_csv(url.format(p+y)).assign(년도=y, 시도=p) for p in prov for y in ['2018', '2019', '2020', '2021']]).reset_index(drop=True)\
+.assign(년도 = lambda df: df.년도.astype(int))\
+.set_index(['년도','시도','지역']).applymap(lambda x: int(str(x).replace(',','')))\
+.reset_index()
+df_global = pd.DataFrame([l['properties'] for l in global_dict['features']])
+df_local = pd.DataFrame([l['properties'] for l in local_dict['features']])
+df_json = df_local.set_index('name')\
+.rename(
+    {name:name.split('시')[-1] for name in df_local['name'] if ('시' in name) and ('구' in name) and (len(name)>3)}
+).reset_index()\
+.drop(['base_year','name_eng'],axis=1)\
+.rename({'name':'name_local','code':'code_local'},axis=1)\
+.assign(code = lambda df: df['code_local'].str[:2])\
+.merge(df_global.drop(['base_year','name_eng'],axis=1))
+df_left = df.assign(
+    시도 = lambda df: df.시도.map({l['properties']['name_eng']:l['properties']['name'] for l in global_dict['features']})
+).assign(on = lambda df: df.시도 + '-' + df.지역)
+df_right = df_json.assign(on = lambda df: df.name + '-' + df.name_local)\
+.drop(['name_local','name'],axis=1)
+df2 = df_left.merge(
+    df_right.set_index('on')\
+    .rename({'인천광역시-남구':'인천광역시-미추홀구'})\
+    .reset_index()
+).drop(['on'],axis=1)
+
+df3 = df2[df2['시도'].isin(['서울특별시', '경기도', '인천광역시'])]
+
+df3['에너지사용량차이(전기-도시가스)'] = df3['에너지사용량(TOE)/전기'] - df3['에너지사용량(TOE)/도시가스']
+
+df3
+
+s_dict = local_dict.copy() 
+s_dict['features'] = [l for l in s_dict['features'] if l['properties']['code'][:2] in ['11', '28', '41']]
+
+min_value = np.nanmin(df3['에너지사용량차이(전기-도시가스)'])
+max_value = np.nanmax(df3['에너지사용량차이(전기-도시가스)'])
+
+fig = px.choropleth_mapbox(
+    geojson=s_dict,
+    featureidkey='properties.code',
+    data_frame=df3,
+    locations='code_local',
+    color='에너지사용량차이(전기-도시가스)',
+    animation_frame='년도',
+    hover_data=['시도', '지역'],
+    mapbox_style="carto-positron",
+    range_color=[min_value, max_value],
+    center={"lat": 37.5642135, "lon": 127.0016985},
+    zoom=7.5,
+    height=800,
+    width=750
+)
+fig.update_traces(
+    marker = { 
+        'opacity':0.5
+    }
+)
+fig.show(config={'scrollZoom':False})
+```
